@@ -1,19 +1,19 @@
+import json
 import httpserializers as serializers
+from httpserializers.corejson_serializer import coreapi_serializer
 from httpserializers import Document, Link, Field
 
 
 def test_corejson_serializer():
-    assert (
-        serializers.serializers["application/coreapi+json"]
-        is serializers.coreapi_serializer
-    )
+    assert serializers.serializers["application/coreapi+json"] is coreapi_serializer
 
 
 def test_corejson_serializer_small_document():
     corejson = serializers.serializers["application/coreapi+json"]
-    assert corejson(
+    body = corejson(
         Document(url="/users/", title="Users", content={"users": ["1", "2", "3"]})
-    ) == {
+    )
+    assert json.loads(body.decode("UTF-8")) == {
         "_type": "document",
         "_meta": {"url": "/users/", "title": "Users"},
         "users": ["1", "2", "3"],
@@ -22,7 +22,7 @@ def test_corejson_serializer_small_document():
 
 def test_corejson_serializer_full_document():
     corejson = serializers.serializers["application/coreapi+json"]
-    assert corejson(
+    body = corejson(
         Document(
             url="/users/",
             title="Users",
@@ -52,7 +52,8 @@ def test_corejson_serializer_full_document():
                 ),
             },
         )
-    ) == {
+    )
+    assert json.loads(body.decode("UTF-8")) == {
         "_type": "document",
         "_meta": {"url": "/users/", "title": "Users"},
         "users": [],
@@ -80,14 +81,15 @@ def test_corejson_serializer_full_document():
 
 def test_corejson_serializer_link():
     corejson = serializers.serializers["application/coreapi+json"]
-    assert corejson(
+    body = corejson(
         Link(
             url="/users/",
             action="post",
             description="POSTing to this endpoint creates a new user",
             fields=[Field(name="username")],
         ),
-    ) == {
+    )
+    assert json.loads(body.decode("UTF-8")) == {
         "_type": "link",
         "url": "/users/",
         "description": "POSTing to this endpoint creates a new user",
@@ -98,13 +100,14 @@ def test_corejson_serializer_link():
 
 def test_corejson_serializer_link_not_required():
     corejson = serializers.serializers["application/coreapi+json"]
-    assert corejson(
+    body = corejson(
         Link(
             url="/users/",
             action="post",
             description="POSTing to this endpoint creates a new user",
         ),
-    ) == {
+    )
+    assert json.loads(body.decode("UTF-8")) == {
         "_type": "link",
         "url": "/users/",
         "description": "POSTing to this endpoint creates a new user",
