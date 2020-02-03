@@ -29,9 +29,6 @@ def _hal_serializer(node, base_url=None):
                 for key, item in node.links.items()
             }
         )
-
-        # Fill in key-value content.
-        ret.update([])
         return ret
 
     if isinstance(node, Link):
