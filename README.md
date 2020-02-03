@@ -21,6 +21,7 @@ Python:
 
 >>> article = Document(
 ...     title="Article",
+...     url="/articles/123/",
 ...     content={
 ...         "title": "Wild fires over there",
 ...         "body": "Firefighters spotted …"
@@ -56,7 +57,7 @@ Or use `coreapi+json`:
 {
     "_type": "document",
     "_meta": {
-        "url": "",
+        "url": "/articles/123/",
         "title": "Article"
     },
     "title": "Wild fires over there",
@@ -66,6 +67,28 @@ Or use `coreapi+json`:
         "url": "/articles/123/comments/",
         "title": "Wild fires over there comments.",
         "description": ""
+    }
+}
+
+```
+
+Or `application/hal+json`:
+
+```python
+>>> from httpserializers import hal_serializer
+>>> print(hal_serializer(article).decode("UTF-8"))
+{
+    "title": "Wild fires over there",
+    "body": "Firefighters spotted \u2026",
+    "_links": {
+        "self": {
+            "href": "/articles/123/",
+            "title": "Article"
+        },
+        "comments": {
+            "href": "/articles/123/comments/",
+            "title": "Wild fires over there comments."
+        }
     }
 }
 

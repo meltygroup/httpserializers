@@ -14,23 +14,24 @@ def _hal_serializer(node, base_url=None):
     """Recursively serialize a Document to the HAL format.
     """
     if isinstance(node, Document):
-        ret = {}
-        ret["_links"] = {
-            key: _hal_serializer(item, base_url=base_url)
-            for key, item in node.links.items()
+        ret = {
+            key: _hal_serializer(value, base_url=base_url)
+            for key, value in node.content.items()
         }
         if not node.url:
             warn("Each Resource Object SHOULD contain a 'self' link")
-        ret["_links"]["self"] = {"href": as_absolute(base_url, node.url)}
+        ret["_links"] = {"self": {"href": as_absolute(base_url, node.url)}}
         if node.title:
             ret["_links"]["self"]["title"] = node.title
-        # Fill in key-value content.
-        ret.update(
-            [
-                (key, _hal_serializer(value, base_url=base_url))
-                for key, value in node.content.items()
-            ]
+        ret["_links"].update(
+            {
+                key: _hal_serializer(item, base_url=base_url)
+                for key, item in node.links.items()
+            }
         )
+
+        # Fill in key-value content.
+        ret.update([])
         return ret
 
     if isinstance(node, Link):
