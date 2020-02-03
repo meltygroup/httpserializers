@@ -1,3 +1,6 @@
+"""Some utility function(s) for httpserializer.
+"""
+
 from urllib.parse import urljoin
 
 

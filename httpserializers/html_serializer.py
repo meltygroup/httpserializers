@@ -1,3 +1,6 @@
+"""HTML Serializer.
+"""
+
 from jinja2 import Template
 
 
@@ -7,7 +10,7 @@ from httpserializers.registry import serializers
 
 
 def _html_serializer(node, base_url=None):
-    """Take Document object and return an HTML document representing it.
+    """Recursively serializes a document to HTML.
     """
     if isinstance(node, Document):
         ret = [
@@ -19,7 +22,15 @@ def _html_serializer(node, base_url=None):
         ret.extend(
             [
                 "<li>" + _html_serializer(value, base_url=base_url) + "</li>"
-                for key, value in node.data.items()
+                for key, value in node.content.items()
+            ]
+        )
+        ret.append("</ul>Links:")
+        ret.append("<ul class='links'>")
+        ret.extend(
+            [
+                "<li>" + _html_serializer(value, base_url=base_url) + "</li>"
+                for key, value in node.links.items()
             ]
         )
         ret.append("</ul></div>")
@@ -32,9 +43,9 @@ def _html_serializer(node, base_url=None):
         {{ action|upper|e }}&nbsp;{{ url|urlize }}
             <p>{{ description|e }}</p>"""
             ).render(
-                url=as_absolute(base_url, node.url),
+                url=as_absolute(base_url, node.href),
                 title=node.title,
-                action=node.action,
+                action=node.allow,
                 description=node.description,
             )
         ]
@@ -85,4 +96,6 @@ def _html_serializer(node, base_url=None):
 
 @serializers(media_types={"text/html"}, default=True)
 def html_serializer(node, base_url=None):
+    """HTML serializer.
+    """
     return _html_serializer(node, base_url).encode("UTF-8")

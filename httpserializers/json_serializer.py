@@ -1,3 +1,6 @@
+"""Minimalistic JSON serializer.
+"""
+
 import json
 
 from httpserializers.types import Document, Link, Field
@@ -6,14 +9,22 @@ from httpserializers.registry import serializers
 
 
 def _json_serializer(node, base_url=None):
+    """Recursively encode a Document using a minimalistic JSON format.
+    """
     if isinstance(node, Document):
         return {
-            key: _json_serializer(value, base_url=base_url)
-            for key, value in node.data.items()
+            **{
+                key: _json_serializer(value, base_url=base_url)
+                for key, value in node.content.items()
+            },
+            **{
+                key: _json_serializer(value, base_url=base_url)
+                for key, value in node.links.items()
+            },
         }
 
     if isinstance(node, Link):
-        return as_absolute(base_url, node.url)
+        return as_absolute(base_url, node.href or node.href_template)
 
     if isinstance(node, Field):
         return node.name
@@ -26,6 +37,6 @@ def _json_serializer(node, base_url=None):
 
 @serializers(media_types={"application/json"}, default=False)
 def json_serializer(node, base_url=None):
-    """Serialize a response to basic json.
+    """Minimalistic JSON serializer.
     """
     return json.dumps(_json_serializer(node, base_url), indent=4).encode("UTF-8")

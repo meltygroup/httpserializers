@@ -1,32 +1,28 @@
 import json
 
-import httpserializers as serializers
-from httpserializers import Document, Link, Field
+from httpserializers import Document, Link, Field, json_home_serializer
 
 
 def test_json_home():
-    serializer = serializers.serializers["application/json-home"]
-    body = serializer(
+    body = json_home_serializer(
         Document(
             title="Identification Provider",
-            content={
-                "links": {
-                    "author": "mailto:julien@palard.fr",
-                    "describedBy": "https://kisee.readthedocs.io",
-                },
+            links={
                 "create_token": Link(
                     "/jwt/",
                     title="jwt",
-                    action="post",
+                    allow=["GET", "POST"],
+                    formats={"application/coreapi+json": {}},
                     description="Create a new JSON Web Token.",
                     fields=[
                         Field("username", required=True),
                         Field("password", required=True),
                     ],
                 ),
-                "register_user": Link(
+                "users": Link(
                     "/users/",
-                    action="post",
+                    allow=["GET", "POST", "PATCH"],
+                    formats={"application/coreapi+json": {}},
                     fields=[
                         Field("username", required=True),
                         Field("password", required=True),
@@ -34,18 +30,13 @@ def test_json_home():
                     ],
                 ),
             },
-        )
+        ),
+        base_url="http://localhost:8000/",
     )
     assert json.loads(body.decode("UTF-8")) == {
-        "api": {
-            "title": "Identification Provider",
-            "links": {
-                "author": "mailto:julien@palard.fr",
-                "describedBy": "https://kisee.readthedocs.io",
-            },
-        },
+        "api": {"title": "Identification Provider"},
         "resources": {
-            "jwt": {
+            "create_token": {
                 "href": "http://localhost:8000/jwt/",
                 "hints": {
                     "allow": ["GET", "POST"],
@@ -60,23 +51,35 @@ def test_json_home():
                 },
             },
         },
-        "actions": {
-            "register_user": {
-                "href": f"http://localhost:8000/users/",
-                "method": "POST",
-                "fields": [
-                    {"name": "username", "required": True},
-                    {"name": "password", "required": True},
-                    {"name": "email", "required": True},
-                ],
+    }
+
+
+def test_no_link():
+    body = json_home_serializer(Document(title="Articles"))
+    assert json.loads(body.decode("UTF-8")) == {
+        "api": {"title": "Articles"},
+        "resources": {},
+    }
+
+
+def test_href_template():
+    body = json_home_serializer(
+        Document(
+            url="/",
+            title="Articles",
+            links={
+                "comments": Link(
+                    href_template="/comments{/id}/", href_vars={"id": "/params/id/"}
+                )
             },
-            "create_token": {
-                "href": f"http://localhost:8000/jwt/",
-                "method": "POST",
-                "fields": [
-                    {"name": "username", "required": True},
-                    {"name": "password", "required": True},
-                ],
+        )
+    )
+    assert json.loads(body.decode("UTF-8")) == {
+        "api": {"title": "Articles"},
+        "resources": {
+            "comments": {
+                "hrefTemplate": "/comments{/id}/",
+                "hrefVars": {"id": "/params/id/"},
             },
         },
     }

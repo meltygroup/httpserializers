@@ -1,3 +1,6 @@
+"""Helper class and instance to pick the right serializer according to
+an Accept header.
+"""
 from typing import Set
 
 from werkzeug.http import parse_accept_header

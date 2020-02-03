@@ -9,11 +9,11 @@ def test_json_serializer_full_document():
         Document(
             url="/users/",
             title="Users",
-            content={
-                "users": [],
+            content={"users": []},
+            links={
                 "register_user": Link(
-                    url="/users/",
-                    action="post",
+                    href="/users/",
+                    allow=["POST"],
                     title="Register a new user",
                     description="POSTing to this endpoint creates a new user",
                     fields=[
@@ -36,7 +36,10 @@ def test_json_serializer_full_document():
             },
         )
     )
-    assert json.loads(body.decode("UTF-8")) == {"register_user": "/users/", "users": []}
+    assert json.loads(body.decode("UTF-8")) == {
+        "register_user": "/users/",
+        "users": [],
+    }
 
 
 def json_serialize(document):
@@ -48,7 +51,7 @@ def test_json_serializer():
     assert json_serialize([]) == []
     assert json_serialize("Hello world") == "Hello world"
     assert json_serialize(Document(url="/", title="Test", content={})) == {}
-    assert json_serialize(Link(url="/link/", action="POST", title="Foo")) == "/link/"
+    assert json_serialize(Link(href="/link/", allow=["POST"], title="Foo")) == "/link/"
     assert (
         json_serialize(
             Field(name="username", required=False, description="Just a login")

@@ -6,10 +6,22 @@ various representations of our resources like mason, json-ld, hal, ...
 from typing import Tuple
 
 from httpserializers.types import Document, Link, Field
-from httpserializers.corejson_serializer import coreapi_serializer
+from httpserializers.coreapi_serializer import coreapi_serializer
 from httpserializers.json_serializer import json_serializer
-from httpserializers.html_serializer import html_serializer
+from httpserializers.json_home_serializer import json_home_serializer
+from httpserializers.hal_serializer import hal_serializer
 from httpserializers.registry import serializers
+
+__all__ = [
+    "Document",
+    "Link",
+    "Field",
+    "coreapi_serializer",
+    "json_serializer",
+    "json_home_serializer",
+    "hal_serializer",
+    "serializers",
+]
 
 
 def serialize(

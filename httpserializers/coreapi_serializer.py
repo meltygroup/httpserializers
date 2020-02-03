@@ -1,3 +1,7 @@
+"""Serializes using https://www.coreapi.org/specification/encoding/
+(application/vnd.coreapi+json).
+"""
+
 import json
 
 from httpserializers.types import Document, Link, Field
@@ -6,8 +10,7 @@ from httpserializers.registry import serializers
 
 
 def _coreapi_serializer(node, base_url=None):
-    """Take a Core API document and return Python primitives
-    ready to be rendered into the JSON style encoding.
+    """Recursively serializes a document according to coreapi+json.
     """
     if isinstance(node, Document):
         ret = {}
@@ -23,7 +26,13 @@ def _coreapi_serializer(node, base_url=None):
         ret.update(
             [
                 (key, _coreapi_serializer(value, base_url=base_url))
-                for key, value in node.data.items()
+                for key, value in node.content.items()
+            ]
+        )
+        ret.update(
+            [
+                (key, _coreapi_serializer(value, base_url=base_url))
+                for key, value in node.links.items()
             ]
         )
         return ret
@@ -31,9 +40,9 @@ def _coreapi_serializer(node, base_url=None):
     if isinstance(node, Link):
         ret = {}
         ret["_type"] = "link"
-        url = node.url
-        ret["url"] = as_absolute(base_url, url)
-        ret["action"] = node.action
+        ret["url"] = as_absolute(base_url, node.href or node.href_template)
+        if node.allow:
+            ret["action"] = node.allow[0].lower()
         if node.title:
             ret["title"] = node.title
         ret["description"] = node.description
@@ -59,4 +68,6 @@ def _coreapi_serializer(node, base_url=None):
 
 @serializers(media_types={"application/coreapi+json"}, default=True)
 def coreapi_serializer(node, base_url=None):
+    """coreapi+json serializer.
+    """
     return json.dumps(_coreapi_serializer(node, base_url), indent=4).encode("UTF-8")
