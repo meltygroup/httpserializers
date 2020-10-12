@@ -16,21 +16,23 @@ def _html_serializer(node, base_url=None):
 <div>
     <h1>{{ node.title|e }}</h1>
     <h2>{{ as_absolute(node.url)|urlize }}</h2>
-    <ul class="content">
-        {% for c in node.content.values() %}
-        <li>
-            {{ dispatch(c)|indent(12) }}
-        </li>
+    <table class="content">
+        {% for key, content in node.content.items() %}
+        <tr>{{ key }}</tr>
+        <tr>
+            {{ dispatch(content)|indent(12) }}
+        </tr>
         {% endfor %}
-    </ul>
+    </table>
     <h2>Links</h2>
-    <ul class="links">
-        {% for link in node.links.values() %}
-        <li>
+    <table class="links">
+        {% for key, link in node.links.items() %}
+        <tr>{{ key }}</tr>
+        <tr>
             {{ dispatch(link)|indent(12) }}
-        </li>
+        </tr>
         {% endfor %}
-    </ul>
+    </table>
 </div>
 {%- endmacro -%}
 
