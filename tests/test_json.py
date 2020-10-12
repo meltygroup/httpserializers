@@ -5,7 +5,7 @@ from httpserializers import Document, Link, Field
 
 def test_json_serializer_full_document():
     basejson = serializers.serializers["application/json"]
-    body = basejson(
+    body = basejson.serialize(
         Document(
             url="/users/",
             title="Users",
@@ -43,7 +43,7 @@ def test_json_serializer_full_document():
 
 
 def json_serialize(document):
-    body = serializers.serializers["application/json"](document)
+    body = serializers.serializers["application/json"].serialize(document)
     return json.loads(body.decode("utf-8"))
 
 

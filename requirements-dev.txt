@@ -4,38 +4,37 @@
 #
 #    pip-compile requirements-dev.in
 #
-appdirs==1.4.3            # via black
-astroid==2.3.3            # via pylint
-attrs==19.3.0             # via black, flake8-bugbear, pytest
-black==19.10b0
-click==7.0                # via black
-coverage==5.0.3           # via pytest-cov
-entrypoints==0.3          # via flake8
-filelock==3.0.12          # via tox
-flake8-bugbear==20.1.3
-flake8==3.7.9
-isort==4.3.21             # via pylint
+appdirs==1.4.4            # via black, virtualenv
+astroid==2.4.2            # via pylint
+attrs==20.2.0             # via flake8-bugbear, pytest
+black==20.8b1             # via -r requirements-dev.in
+click==7.1.2              # via black
+coverage==5.3             # via pytest-cov
+distlib==0.3.1            # via virtualenv
+filelock==3.0.12          # via tox, virtualenv
+flake8-bugbear==20.1.4    # via -r requirements-dev.in
+flake8==3.8.4             # via -r requirements-dev.in, flake8-bugbear
+iniconfig==1.0.1          # via pytest
+isort==5.6.3              # via pylint
 lazy-object-proxy==1.4.3  # via astroid
 mccabe==0.6.1             # via flake8, pylint
-more-itertools==8.2.0     # via pytest
-mypy-extensions==0.4.3    # via mypy
-mypy==0.761
-packaging==20.1           # via pytest, tox
-pathspec==0.7.0           # via black
+mypy-extensions==0.4.3    # via black, mypy
+mypy==0.790               # via -r requirements-dev.in
+packaging==20.4           # via pytest, tox
+pathspec==0.8.0           # via black
 pluggy==0.13.1            # via pytest, tox
-py==1.8.1                 # via pytest, tox
-pycodestyle==2.5.0        # via flake8
-pyflakes==2.1.1           # via flake8
-pylint==2.4.4
-pyparsing==2.4.6          # via packaging
-pytest-cov==2.8.1
-pytest==5.3.5
-regex==2020.1.8           # via black
-six==1.14.0               # via astroid, packaging, tox
-toml==0.10.0              # via black, tox
-tox==3.14.3
+py==1.9.0                 # via pytest, tox
+pycodestyle==2.6.0        # via flake8
+pyflakes==2.2.0           # via flake8
+pylint==2.6.0             # via -r requirements-dev.in
+pyparsing==2.4.7          # via packaging
+pytest-cov==2.10.1        # via -r requirements-dev.in
+pytest==6.1.1             # via -r requirements-dev.in, pytest-cov
+regex==2020.10.11         # via black
+six==1.15.0               # via astroid, packaging, tox, virtualenv
+toml==0.10.1              # via black, pylint, pytest, tox
+tox==3.20.1               # via -r requirements-dev.in
 typed-ast==1.4.1          # via black, mypy
-typing-extensions==3.7.4.1  # via mypy
-virtualenv==16.7.9        # via tox
-wcwidth==0.1.8            # via pytest
-wrapt==1.11.2             # via astroid
+typing-extensions==3.7.4.3  # via black, mypy
+virtualenv==20.0.34       # via tox
+wrapt==1.12.1             # via astroid

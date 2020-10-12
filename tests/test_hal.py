@@ -1,29 +1,40 @@
 import json
 import httpserializers as serializers
-from httpserializers.hal_serializer import hal_serializer
+from httpserializers.hal_serializer import HALSerializer
 from httpserializers import Document, Link, Field
 
 import pytest
 
 
-def test_hal_serializer():
-    assert serializers.serializers["application/hal+json"] is hal_serializer
+@pytest.fixture
+def hal():
+    return serializers.serializers["application/hal+json"]
 
 
-def test_hal_serializer_small_document():
-    hal = serializers.serializers["application/hal+json"]
-    body = hal(
+@pytest.fixture
+def hal_serializer(hal):
+    def serialize(document: Document):
+        return json.loads(hal.serialize(document).decode("UTF-8"))
+
+    return serialize
+
+
+def test_hal_serializer(hal):
+    assert isinstance(hal, HALSerializer)
+
+
+def test_hal_serializer_small_document(hal_serializer):
+    body = hal_serializer(
         Document(url="/users/", title="Users", content={"users": ["1", "2", "3"]})
     )
-    assert json.loads(body.decode("UTF-8")) == {
+    assert body == {
         "_links": {"self": {"href": "/users/", "title": "Users"}},
         "users": ["1", "2", "3"],
     }
 
 
-def test_hal_serializer_full_document():
-    hal = serializers.serializers["application/hal+json"]
-    body = hal(
+def test_hal_serializer_full_document(hal_serializer):
+    body = hal_serializer(
         Document(
             url="/users/",
             title="Users",
@@ -54,7 +65,7 @@ def test_hal_serializer_full_document():
             },
         )
     )
-    assert json.loads(body.decode("UTF-8")) == {
+    assert body == {
         "_links": {
             "self": {"href": "/users/", "title": "Users"},
             "register_user": {"href": "/users/", "title": "Register a new user"},
@@ -63,9 +74,8 @@ def test_hal_serializer_full_document():
     }
 
 
-def test_hal_serializer_link():
-    hal = serializers.serializers["application/hal+json"]
-    body = hal(
+def test_hal_serializer_link(hal_serializer):
+    body = hal_serializer(
         Link(
             href="/users/",
             allow=["POST"],
@@ -73,23 +83,21 @@ def test_hal_serializer_link():
             fields=[Field(name="username")],
         )
     )
-    assert json.loads(body.decode("UTF-8")) == {
+    assert body == {
         "href": "/users/",
     }
 
 
-def test_warn_if_missing_self():
-    hal = serializers.serializers["application/hal+json"]
+def test_warn_if_missing_self(hal_serializer):
     with pytest.warns(UserWarning):
-        hal(Document())
+        hal_serializer(Document())
 
 
-def test_href_template():
-    hal = serializers.serializers["application/hal+json"]
-    body = hal(
+def test_href_template(hal_serializer):
+    body = hal_serializer(
         Document(url="/", links={"comments": Link(href_template="/comments{/id}/")})
     )
-    assert json.loads(body.decode("UTF-8")) == {
+    assert body == {
         "_links": {
             "self": {"href": "/"},
             "comments": {"href": "/comments{/id}/", "templated": True},
@@ -97,9 +105,8 @@ def test_href_template():
     }
 
 
-def test_type():
-    hal = serializers.serializers["application/hal+json"]
-    body = hal(
+def test_type(hal_serializer):
+    body = hal_serializer(
         Document(
             url="/",
             links={
@@ -109,7 +116,7 @@ def test_type():
             },
         )
     )
-    assert json.loads(body.decode("UTF-8")) == {
+    assert body == {
         "_links": {
             "self": {"href": "/"},
             "comments": {

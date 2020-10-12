@@ -1,23 +1,28 @@
+import pytest
+
 import httpserializers as serializers
-from httpserializers.html_serializer import html_serializer
+from httpserializers.html_serializer import HTMLSerializer
 from httpserializers import Document, Link, Field
 
 
-def test_html_serializer():
-    assert serializers.serializers["text/html"] is html_serializer
+@pytest.fixture
+def html():
+    return serializers.serializers["text/html"]
 
 
-def test_html_serializer_small_document():
-    html = serializers.serializers["text/html"]
-    body = html(
+def test_html_serializer(html):
+    assert isinstance(html, HTMLSerializer)
+
+
+def test_html_serializer_small_document(html):
+    body = html.serialize(
         Document(url="/users/", title="Users", content={"users": ["1", "2", "3"]})
     )
     assert "Users" in body.decode("UTF-8")
 
 
-def test_html_serializer_full_document():
-    html = serializers.serializers["text/html"]
-    body = html(
+def test_html_serializer_full_document(html):
+    body = html.serialize(
         Document(
             url="/users/",
             title="Users",
@@ -52,9 +57,8 @@ def test_html_serializer_full_document():
     assert "password" in body
 
 
-def test_html_serializer_link():
-    html = serializers.serializers["text/html"]
-    body = html(
+def test_html_serializer_link(html):
+    body = html.serialize(
         Link(
             href="/users/",
             allow=["POST"],
@@ -65,9 +69,8 @@ def test_html_serializer_link():
     assert "POST" in body.decode("UTF-8")
 
 
-def test_no_field():
-    html = serializers.serializers["text/html"]
-    body = html(
+def test_no_field(html):
+    body = html.serialize(
         Link(
             href="/users/",
             allow=["POST"],

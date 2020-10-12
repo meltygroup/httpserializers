@@ -3,14 +3,12 @@ https://mnot.github.io/I-D/json-home/.
 """
 import json
 
-from httpserializers.types import Document, Link
+from httpserializers.types import Document, Link, Serializer
 from httpserializers.utils import as_absolute
-from httpserializers.registry import serializers
 
 
 def _json_home_serializer(node, base_url=None):
-    """Recursively serialize a document to the JSON-home format.
-    """
+    """Recursively serialize a document to the JSON-home format."""
     if isinstance(node, Document):
         ret = {"api": {"title": node.title}}
         ret["resources"] = {
@@ -38,8 +36,13 @@ def _json_home_serializer(node, base_url=None):
     return ret
 
 
-@serializers(media_types={"application/json_home+json"}, default=True)
-def json_home_serializer(node, base_url=None):
-    """JSON-Home serializer.
-    """
-    return json.dumps(_json_home_serializer(node, base_url), indent=4).encode("UTF-8")
+class JSONHomeSerializer(Serializer):
+    """JSON-Home serializer."""
+
+    media_type = "application/json-home"
+
+    def serialize(self, document: Document, base_url: str = None) -> bytes:
+        """Serialize a Document to the JSON-home format."""
+        return json.dumps(_json_home_serializer(document, base_url), indent=4).encode(
+            "UTF-8"
+        )

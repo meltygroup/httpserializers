@@ -4,14 +4,12 @@
 
 import json
 
-from httpserializers.types import Document, Link, Field
+from httpserializers.types import Document, Link, Field, Serializer
 from httpserializers.utils import as_absolute
-from httpserializers.registry import serializers
 
 
 def _coreapi_serializer(node, base_url=None):
-    """Recursively serializes a document according to coreapi+json.
-    """
+    """Recursively serializes a document according to coreapi+json."""
     if isinstance(node, Document):
         ret = {}
         ret["_type"] = "document"
@@ -66,8 +64,13 @@ def _coreapi_serializer(node, base_url=None):
     return node
 
 
-@serializers(media_types={"application/coreapi+json"}, default=True)
-def coreapi_serializer(node, base_url=None):
-    """coreapi+json serializer.
-    """
-    return json.dumps(_coreapi_serializer(node, base_url), indent=4).encode("UTF-8")
+class CoreAPISerializer(Serializer):
+    """coreapi+json serializer."""
+
+    media_type = "application/hal+json"
+
+    def serialize(self, document: Document, base_url: str = None) -> bytes:
+        """Serialize a document using Core API serializer."""
+        return json.dumps(_coreapi_serializer(document, base_url), indent=4).encode(
+            "UTF-8"
+        )

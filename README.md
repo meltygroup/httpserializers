@@ -17,7 +17,7 @@ body, and a link to its comments, you can describe it using simple
 Python:
 
 ```python
->>> from httpserializers import Document, Link
+>>> from httpserializers import Document, Link, serializers
 
 >>> article = Document(
 ...     title="Article",
@@ -39,8 +39,7 @@ Python:
 then you can encode it using various media types, let's start simple:
 
 ```python
->>> from httpserializers import json_serializer
->>> print(json_serializer(article).decode("UTF-8"))
+>>> print(serializers["application/json"].serialize(article).decode("UTF-8"))
 {
     "title": "Wild fires over there",
     "body": "Firefighters spotted …",
@@ -52,8 +51,7 @@ then you can encode it using various media types, let's start simple:
 Or use `coreapi+json`:
 
 ```python
->>> from httpserializers import coreapi_serializer
->>> print(coreapi_serializer(article).decode("UTF-8"))
+>>> print(serializers["application/vnd.coreapi+json"].serialize(article).decode("UTF-8"))
 {
     "_type": "document",
     "_meta": {
@@ -75,8 +73,7 @@ Or use `coreapi+json`:
 Or `application/hal+json`:
 
 ```python
->>> from httpserializers import hal_serializer
->>> print(hal_serializer(article).decode("UTF-8"))
+>>> print(serializers["application/hal+json"].serialize(article).decode("UTF-8"))
 {
     "title": "Wild fires over there",
     "body": "Firefighters spotted \u2026",

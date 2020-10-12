@@ -4,14 +4,12 @@
 from jinja2 import Template
 
 
-from httpserializers.types import Document, Link, Field
+from httpserializers.types import Document, Link, Field, Serializer
 from httpserializers.utils import as_absolute
-from httpserializers.registry import serializers
 
 
 def _html_serializer(node, base_url=None):
-    """Recursively serializes a document to HTML.
-    """
+    """Recursively serializes a document to HTML."""
     if isinstance(node, Document):
         ret = [
             Template("<div><h1>{{ title|e }}</h1>{{ url|urlize }}").render(
@@ -94,8 +92,11 @@ def _html_serializer(node, base_url=None):
     return node
 
 
-@serializers(media_types={"text/html"}, default=True)
-def html_serializer(node, base_url=None):
-    """HTML serializer.
-    """
-    return _html_serializer(node, base_url).encode("UTF-8")
+class HTMLSerializer(Serializer):
+    """HTML serializer."""
+
+    media_type = "text/html"
+
+    def serialize(self, document: Document, base_url: str = None) -> bytes:
+        """Serializes a document to HTML."""
+        return _html_serializer(document, base_url).encode("UTF-8")

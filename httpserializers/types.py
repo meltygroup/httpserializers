@@ -1,7 +1,7 @@
 """Exposes types for httpserializers: Document, Link, and Field.
 """
 
-
+from abc import ABC, abstractmethod
 from typing import Optional, Union, List, Sequence, Any, Mapping
 
 
@@ -82,3 +82,13 @@ class Document:
         self.description = "" if (description is None) else description
         self.content = content or {}
         self.links = links or {}
+
+
+class Serializer(ABC):
+    """Base class for all serializers."""
+
+    media_type: str = ""
+
+    @abstractmethod
+    def serialize(self, document: Document, base_url: str = None) -> bytes:
+        """Serializers should implement this method."""

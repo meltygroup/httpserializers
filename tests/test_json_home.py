@@ -1,10 +1,10 @@
 import json
 
-from httpserializers import Document, Link, Field, json_home_serializer
+from httpserializers import Document, Link, Field, JSONHomeSerializer
 
 
 def test_json_home():
-    body = json_home_serializer(
+    body = JSONHomeSerializer().serialize(
         Document(
             title="Identification Provider",
             links={
@@ -44,7 +44,7 @@ def test_json_home():
                 },
             },
             "users": {
-                "href": f"http://localhost:8000/users/",
+                "href": "http://localhost:8000/users/",
                 "hints": {
                     "allow": ["GET", "POST", "PATCH"],
                     "formats": {"application/coreapi+json": {}},
@@ -55,7 +55,7 @@ def test_json_home():
 
 
 def test_no_link():
-    body = json_home_serializer(Document(title="Articles"))
+    body = JSONHomeSerializer().serialize(Document(title="Articles"))
     assert json.loads(body.decode("UTF-8")) == {
         "api": {"title": "Articles"},
         "resources": {},
@@ -63,7 +63,7 @@ def test_no_link():
 
 
 def test_href_template():
-    body = json_home_serializer(
+    body = JSONHomeSerializer().serialize(
         Document(
             url="/",
             title="Articles",

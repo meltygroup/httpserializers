@@ -5,14 +5,12 @@
 import json
 from warnings import warn
 
-from httpserializers.types import Document, Link
+from httpserializers.types import Document, Link, Serializer
 from httpserializers.utils import as_absolute
-from httpserializers.registry import serializers
 
 
 def _hal_serializer(node, base_url=None):
-    """Recursively serialize a Document to the HAL format.
-    """
+    """Recursively serialize a Document to the HAL format."""
     if isinstance(node, Document):
         ret = {
             key: _hal_serializer(value, base_url=base_url)
@@ -53,8 +51,11 @@ def _hal_serializer(node, base_url=None):
     return node
 
 
-@serializers(media_types={"application/hal+json"}, default=True)
-def hal_serializer(node, base_url=None):
-    """HAL serializer.
-    """
-    return json.dumps(_hal_serializer(node, base_url), indent=4).encode("UTF-8")
+class HALSerializer(Serializer):
+    """HAL serializer."""
+
+    media_type = "application/hal+json"
+
+    def serialize(self, document: Document, base_url: str = None) -> bytes:
+        """Recursively serialize a Document to the HAL format."""
+        return json.dumps(_hal_serializer(document, base_url), indent=4).encode("UTF-8")
