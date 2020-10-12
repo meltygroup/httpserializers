@@ -90,3 +90,32 @@ Or `application/hal+json`:
 }
 
 ```
+
+Or HTML if it's a browser asking for it:
+
+```python
+>>> print(serializers["text/html"].serialize(article).decode("UTF-8"))
+<div>
+    <h1>Article</h1>
+    <h2>/articles/123/</h2>
+    <ul class="content">
+        <li>
+            Wild fires over there
+        </li>
+        <li>
+            Firefighters spotted …
+        </li>
+    </ul>
+    <h2>Links</h2>
+    <ul class="links">
+        <li>
+            <div>
+                <h2>Wild fires over there comments.</h2>
+                <p>[] /articles/123/comments/</p>
+                <p></p>
+            </div>
+        </li>
+    </ul>
+</div>
+
+```

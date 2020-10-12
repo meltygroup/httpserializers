@@ -11,85 +11,95 @@ from httpserializers.utils import as_absolute
 def _html_serializer(node, base_url=None):
     """Recursively serializes a document to HTML."""
     if isinstance(node, Document):
-        ret = [
-            Template("<div><h1>{{ title|e }}</h1>{{ url|urlize }}").render(
-                url=as_absolute(base_url, node.url), title=node.title
-            )
-        ]
-        ret.append("<ul class='document'>")
-        ret.extend(
-            [
-                "<li>" + _html_serializer(value, base_url=base_url) + "</li>"
-                for key, value in node.content.items()
-            ]
-        )
-        ret.append("</ul>Links:")
-        ret.append("<ul class='links'>")
-        ret.extend(
-            [
-                "<li>" + _html_serializer(value, base_url=base_url) + "</li>"
-                for key, value in node.links.items()
-            ]
-        )
-        ret.append("</ul></div>")
-        return "".join(ret)
-
-    if isinstance(node, Link):
-        ret = [
-            Template(
-                """<div><h2>{{ title|e }}</h2>
-        {{ action|upper|e }}&nbsp;{{ url|urlize }}
-            <p>{{ description|e }}</p>"""
-            ).render(
-                url=as_absolute(base_url, node.href),
-                title=node.title,
-                action=node.allow,
-                description=node.description,
-            )
-        ]
-        if node.fields:
-            ret.append("Fields: <ul class='fields'>")
-            ret.extend(
-                [
-                    "<li>" + _html_serializer(field, base_url=base_url) + "</li>"
-                    for field in node.fields
-                ]
-            )
-            ret.append("</ul>")
-        ret.append("</div>")
-        return "".join(ret)
-
-    if isinstance(node, Field):
         return Template(
-            """<div>{{ name }}
-            {% if required %}(required){% endif %}
-            {% if description %}<p>{{description}}</p>{% endif %}
-            {% if schema %}
-            <ul>
-            {% for key, value in schema.items() %}
-                <li>{{ key|e }}:&nbsp;{{ value|e }}</li>
+            """
+{%- macro document(node) -%}
+<div>
+    <h1>{{ node.title|e }}</h1>
+    <h2>{{ as_absolute(node.url)|urlize }}</h2>
+    <ul class="content">
+        {% for c in node.content.values() %}
+        <li>
+            {{ dispatch(c)|indent(12) }}
+        </li>
+        {% endfor %}
+    </ul>
+    <h2>Links</h2>
+    <ul class="links">
+        {% for link in node.links.values() %}
+        <li>
+            {{ dispatch(link)|indent(12) }}
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{%- endmacro -%}
+
+{%- macro link(node) -%}
+<div>
+    <h2>{{ node.title|e }}</h2>
+    <p>{{ node.allow|upper|e }} {{ as_absolute(node.href)|urlize }}</p>
+    <p>{{ node.description|e }}</p>
+    {% if node.fields %}
+        <ul class="fields">
+            {% for field in node.fields %}
+            <li>
+              {{ field }}
+            </li>
             {% endfor %}
-            </ul>
-            {% endif %}"""
+        </ul>
+    {% endif %}
+</div>
+{%- endmacro -%}
+
+{%- macro field(node) -%}
+<div>
+    <h2>{{ node.name|e }} {% if node.required %}(required){% endif %}</h2>
+    {% if description %}
+        <p>{{description}}</p>
+    {% endif %}
+    {% if node.schema %}
+        <ul>
+        {% for key, value in node.schema.items() %}
+            <li>{{ key|e }}: {{ value|e }}</li>
+        {% endfor %}
+        </ul>
+   {% endif %}
+</div>
+{%- endmacro -%}
+
+{%- macro list(node) -%}
+<ul class="list">
+    {% for value in node -%}
+        <li>
+            {{ dispatch(value)|indent(12) }}
+        </li>
+    {%- endfor %}
+</ul>
+{%- endmacro -%}
+
+{%- macro dispatch(node) -%}
+    {%- if isinstance(node, Document) -%} {{ document(node) }}
+    {%- elif isinstance(node, Link) -%} {{ link(node) }}
+    {%- elif isinstance(node, Field) -%} {{ field(node) }}
+    {%- elif isinstance(node, _list) -%} {{ list(node) }}
+    {%- else -%} {{ node }}
+    {%- endif -%}
+{%- endmacro -%}
+{{- dispatch(node) -}}""",
+            trim_blocks=True,
+            lstrip_blocks=True,
         ).render(
-            name=node.name,
-            required=node.required,
-            schema=node.schema,
-            description=node.description,
+            node=node,
+            type=type,
+            isinstance=isinstance,
+            Document=Document,
+            Link=Link,
+            Field=Field,
+            _list=list,
+            as_absolute=lambda url: as_absolute(base_url, url),
+            base_url=base_url,
         )
-
-    if isinstance(node, list):
-        ret = ["<ul class='list'>"]
-        ret.extend(
-            [
-                "<li>" + _html_serializer(value, base_url=base_url) + "</li>"
-                for value in node
-            ]
-        )
-        ret.append("</ul>")
-        return "".join(ret)
-
-    return node
 
 
 class HTMLSerializer(Serializer):
