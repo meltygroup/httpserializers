@@ -10,9 +10,8 @@ from httpserializers.utils import as_absolute
 
 def _html_serializer(node, base_url=None):
     """Recursively serializes a document to HTML."""
-    if isinstance(node, Document):
-        return Template(
-            """
+    return Template(
+        """
 {%- macro document(node) -%}
 <div>
     <h1>{{ node.title|e }}</h1>
@@ -41,13 +40,13 @@ def _html_serializer(node, base_url=None):
     <p>{{ node.allow|upper|e }} {{ as_absolute(node.href)|urlize }}</p>
     <p>{{ node.description|e }}</p>
     {% if node.fields %}
-        <ul class="fields">
-            {% for field in node.fields %}
-            <li>
-              {{ field }}
-            </li>
-            {% endfor %}
-        </ul>
+    <ul class="fields">
+        {% for field in node.fields %}
+        <li>
+            {{ dispatch(field)|indent(12) }}
+        </li>
+        {% endfor %}
+    </ul>
     {% endif %}
 </div>
 {%- endmacro -%}
@@ -56,7 +55,7 @@ def _html_serializer(node, base_url=None):
 <div>
     <h2>{{ node.name|e }} {% if node.required %}(required){% endif %}</h2>
     {% if description %}
-        <p>{{description}}</p>
+    <p>{{description}}</p>
     {% endif %}
     {% if node.schema %}
         <ul>
@@ -87,19 +86,19 @@ def _html_serializer(node, base_url=None):
     {%- endif -%}
 {%- endmacro -%}
 {{- dispatch(node) -}}""",
-            trim_blocks=True,
-            lstrip_blocks=True,
-        ).render(
-            node=node,
-            type=type,
-            isinstance=isinstance,
-            Document=Document,
-            Link=Link,
-            Field=Field,
-            _list=list,
-            as_absolute=lambda url: as_absolute(base_url, url),
-            base_url=base_url,
-        )
+        trim_blocks=True,
+        lstrip_blocks=True,
+    ).render(
+        node=node,
+        type=type,
+        isinstance=isinstance,
+        Document=Document,
+        Link=Link,
+        Field=Field,
+        _list=list,
+        as_absolute=lambda url: as_absolute(base_url, url),
+        base_url=base_url,
+    )
 
 
 class HTMLSerializer(Serializer):
