@@ -1,5 +1,5 @@
-"""Serializes using HAL
-(https://www.ietf.org/archive/id/draft-kelly-json-hal-08.txt).
+"""Serializes using JSON-LD
+(https://json-ld.org/).
 """
 
 import json
@@ -9,12 +9,12 @@ from httpserializers.types import Document, Link, Serializer
 from httpserializers.utils import as_absolute
 
 
-def _hal_serializer(node, base_url=None):
-    """Recursively serialize a Document to the HAL format."""
+def _ld_serializer(node, base_url=None):
+    """Recursively serialize a Document to the JSON-LD format."""
     if isinstance(node, Document):
         ret = {
-            key: _hal_serializer(value, base_url=base_url)
-            for key, value in node.items()
+            key: _ld_serializer(value, base_url=base_url)
+            for key, value in node.content.items()
         }
         if not node.url:
             warn("Each Resource Object SHOULD contain a 'self' link")
@@ -23,7 +23,7 @@ def _hal_serializer(node, base_url=None):
             ret["_links"]["self"]["title"] = node.title
         ret["_links"].update(
             {
-                key: _hal_serializer(item, base_url=base_url)
+                key: _ld_serializer(item, base_url=base_url)
                 for key, item in node.links.items()
             }
         )
@@ -46,7 +46,7 @@ def _hal_serializer(node, base_url=None):
         return ret
 
     if isinstance(node, list):
-        return [_hal_serializer(value, base_url=base_url) for value in node]
+        return [_ld_serializer(value, base_url=base_url) for value in node]
 
     return node
 
@@ -58,4 +58,4 @@ class HALSerializer(Serializer):
 
     def serialize(self, document: Document, base_url: str = None) -> bytes:
         """Recursively serialize a Document to the HAL format."""
-        return json.dumps(_hal_serializer(document, base_url), indent=4).encode("UTF-8")
+        return json.dumps(_ld_serializer(document, base_url), indent=4).encode("UTF-8")

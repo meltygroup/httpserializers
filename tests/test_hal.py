@@ -1,7 +1,7 @@
 import json
 import httpserializers as serializers
 from httpserializers.hal_serializer import HALSerializer
-from httpserializers import Document, Link, Field
+from httpserializers import Document, Link, Field, Attribute
 
 import pytest
 
@@ -23,10 +23,14 @@ def test_hal_serializer(hal):
     assert isinstance(hal, HALSerializer)
 
 
+class Users(Document):
+    """Reply for /users/"""
+
+    users = Attribute("https://schema.org/Person", type=list)
+
+
 def test_hal_serializer_small_document(hal_serializer):
-    body = hal_serializer(
-        Document(url="/users/", title="Users", content={"users": ["1", "2", "3"]})
-    )
+    body = hal_serializer(Users(url="/users/", users=["1", "2", "3"]))
     assert body == {
         "_links": {"self": {"href": "/users/", "title": "Users"}},
         "users": ["1", "2", "3"],

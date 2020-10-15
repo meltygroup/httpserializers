@@ -60,28 +60,57 @@ class Link:  # pylint: disable=too-many-instance-attributes
             ]
 
 
+class Attribute:
+    def __init__(self, IRI, default=None, schema=None):
+        """Schema conforms to http://spec.openapis.org/oas/v3.0.2
+
+        with an extra string format being: "url".
+        """
+        self.IRI = IRI
+        self.default = default
+        self.schema = schema
+
+    def __get__(self, instance, owner=None):
+        return instance._content.get(self.name, self.default)
+
+    def __set__(self, instance, value):
+        instance._content[self.name] = value
+
+    def __delete__(self, instance):
+        del instance._content[self.name]
+
+    def __set_name__(self, owner, name):
+        self.name = name
+
+
 class Document:
     """An API response.
 
     Expresses the data that the client may access,
     and the actions that the client may perform.
+
+    It's not a good idea to use this class directly, better inherit
+    from Document to specify default values, context, links, fields a
+    single time, to use it later.
     """
 
     def __init__(
         self,
         url: Optional[str] = None,
-        title: Optional[str] = None,
+        # title: Optional[str] = None, # Deprecated, use class name.
         description: Optional[str] = None,
-        content: Optional[Mapping[str, Any]] = None,
-        links: Optional[Mapping[str, Link]] = None,
+        # content: Optional[Mapping[str, Any]] = None,
+        # links: Optional[Mapping[str, Link]] = None,
+        **kwargs
     ):  # pylint: disable=too-many-arguments
-        content = {} if (content is None) else content
-
+        for key, value in kwargs.items():
+            setattr(self, key, value)
         self.url = "" if (url is None) else url
-        self.title = "" if (title is None) else title
         self.description = "" if (description is None) else description
-        self.content = content or {}
-        self.links = links or {}
+
+    def items(self):
+        for key, value in self._content.items():
+            yield key, value
 
 
 class Serializer(ABC):
