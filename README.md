@@ -1,26 +1,49 @@
 # HTTP Serializers
 
-`HTTPSerializers` is a work in progress, stalled, Python library
-helping APIs replying correctly to the `Accept` HTTP header.
+`HTTPSerializers` is a work in progress Python library
+trying to help APIs replying correctly to the `Accept` HTTP header.
 
-A way may be to describe an API using an OpenAPI description, (anyway
-if you don't have one, write it, you'll see, it's nice).
+It combines a raw response, like:
 
-How it could work:
+```json
+{
+    "users": []
+}
+```
+
+with an OpenAPI description of the API to generate an appropriate
+response, like (if the `Accept` header contains
+`application/hal+json`):
+
+```json
+{
+    "_links": {
+        "self": {
+            "href": "http://example.com/api/book/hal-cookbook"
+         }
+    },
+    "users": [],
+}
+```
+
+The API:
 
 ```python
 from httpserializer import serialize
 
 def your_handler(request):
     ...
-    return serialize(message, accept_header, openapi_spec)
+    return serialize(
+        message,
+        accept_header=request.header['Accept']
+        api_root=request.config["api_root"],
+        path=request.path,
+        schema=openapi_schema)
 ```
 
 You give the response message, the accept header, the OpenAPI spec to
 the httpserializers.serialize function and you'll get an appropriate
-response (elementary transformation would be do deliver a very pretty
-HTML if the client asks for HTML, or a Markdown rendering if the
-client asks for plain text).
+representation.
 
 Idea is to handle at least those types:
 
@@ -57,105 +80,11 @@ body, and a link to its comments, you can describe it using simple
 Python:
 
 ```python
->>> from httpserializers import Document, Link, serializers
-
->>> article = Document(
-...     title="Article",
-...     url="/articles/123/",
-...     content={
-...         "title": "Wild fires over there",
-...         "body": "Firefighters spotted …"
-...     },
-...     links={
-...         "comments": Link(
-...             href="/articles/123/comments/",
-...             title="Wild fires over there comments."
-...         )
-...     }
-... )
-
-```
-
-then you can encode it using various media types, let's start simple:
-
-```python
->>> print(serializers["application/json"].serialize(article).decode("UTF-8"))
-{
-    "title": "Wild fires over there",
-    "body": "Firefighters spotted …",
-    "comments": "/articles/123/comments/"
-}
-
-```
-
-Or use `coreapi+json`:
-
-```python
->>> print(serializers["application/vnd.coreapi+json"].serialize(article).decode("UTF-8"))
-{
-    "_type": "document",
-    "_meta": {
-        "url": "/articles/123/",
-        "title": "Article"
-    },
-    "title": "Wild fires over there",
-    "body": "Firefighters spotted \u2026",
-    "comments": {
-        "_type": "link",
-        "url": "/articles/123/comments/",
-        "title": "Wild fires over there comments.",
-        "description": ""
-    }
-}
-
-```
-
-Or `application/hal+json`:
-
-```python
->>> print(serializers["application/hal+json"].serialize(article).decode("UTF-8"))
-{
-    "title": "Wild fires over there",
-    "body": "Firefighters spotted \u2026",
-    "_links": {
-        "self": {
-            "href": "/articles/123/",
-            "title": "Article"
-        },
-        "comments": {
-            "href": "/articles/123/comments/",
-            "title": "Wild fires over there comments."
-        }
-    }
-}
-
-```
-
-Or HTML if it's a browser asking for it:
-
-```python
->>> print(serializers["text/html"].serialize(article).decode("UTF-8"))
-<div>
-    <h1>Article</h1>
-    <h2>/articles/123/</h2>
-    <ul class="content">
-        <li>
-            Wild fires over there
-        </li>
-        <li>
-            Firefighters spotted …
-        </li>
-    </ul>
-    <h2>Links</h2>
-    <ul class="links">
-        <li>
-            <div>
-                <h2>Wild fires over there comments.</h2>
-                <p>[] /articles/123/comments/</p>
-                <p></p>
-            </div>
-        </li>
-    </ul>
-</div>
-
+>>> from httpserializers import serialize
+>>> import requests
+>>> schema = requests.get("https://petstore3.swagger.io/api/v3/openapi.json").json()
+>>> content_type, response = serialize({"id": 1,"name": "Jessica Right","tag": "pet"},
+...           "http://127.0.0.1:5000/",
+...           "/pet/{petId}",
+...           spec)
 ```

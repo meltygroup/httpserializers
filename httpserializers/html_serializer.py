@@ -1,113 +1,62 @@
 """HTML Serializer.
 """
 
+import json
+
+from pygments import highlight
+from pygments.lexers import JsonLexer
+from pygments.formatters import HtmlFormatter
+
+from functools import lru_cache
 from jinja2 import Template
-
-
-from httpserializers.types import Document, Link, Field, Serializer
 from httpserializers.utils import as_absolute
 
+HTML = Template(
+    """<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{title|e}}</title>
+  {{ style }}
+</head>
+<body>
+  <h1>Content</h1>
+  {{content}}
+  <h1>OpenAPI section</h1>
+  {{schema}}
+</body>
+</html>"""
+)
 
-def _html_serializer(node, base_url=None):
-    """Recursively serializes a document to HTML."""
-    return Template(
-        """
-{%- macro document(node) -%}
-<div>
-    <h1>{{ node.title|e }}</h1>
-    <h2>{{ as_absolute(node.url)|urlize }}</h2>
-    <table class="content">
-        {% for key, content in node.content.items() %}
-        <tr>{{ key }}</tr>
-        <tr>
-            {{ dispatch(content)|indent(12) }}
-        </tr>
-        {% endfor %}
-    </table>
-    <h2>Links</h2>
-    <table class="links">
-        {% for key, link in node.links.items() %}
-        <tr>{{ key }}</tr>
-        <tr>
-            {{ dispatch(link)|indent(12) }}
-        </tr>
-        {% endfor %}
-    </table>
-</div>
-{%- endmacro -%}
 
-{%- macro link(node) -%}
-<div>
-    <h2>{{ node.title|e }}</h2>
-    <p>{{ node.allow|upper|e }} {{ as_absolute(node.href)|urlize }}</p>
-    <p>{{ node.description|e }}</p>
-    {% if node.fields %}
-    <ul class="fields">
-        {% for field in node.fields %}
-        <li>
-            {{ dispatch(field)|indent(12) }}
-        </li>
-        {% endfor %}
-    </ul>
-    {% endif %}
-</div>
-{%- endmacro -%}
-
-{%- macro field(node) -%}
-<div>
-    <h2>{{ node.name|e }} {% if node.required %}(required){% endif %}</h2>
-    {% if description %}
-    <p>{{description}}</p>
-    {% endif %}
-    {% if node.schema %}
-        <ul>
-        {% for key, value in node.schema.items() %}
-            <li>{{ key|e }}: {{ value|e }}</li>
-        {% endfor %}
-        </ul>
-   {% endif %}
-</div>
-{%- endmacro -%}
-
-{%- macro list(node) -%}
-<ul class="list">
-    {% for value in node -%}
-        <li>
-            {{ dispatch(value)|indent(12) }}
-        </li>
-    {%- endfor %}
-</ul>
-{%- endmacro -%}
-
-{%- macro dispatch(node) -%}
-    {%- if isinstance(node, Document) -%} {{ document(node) }}
-    {%- elif isinstance(node, Link) -%} {{ link(node) }}
-    {%- elif isinstance(node, Field) -%} {{ field(node) }}
-    {%- elif isinstance(node, _list) -%} {{ list(node) }}
-    {%- else -%} {{ node }}
-    {%- endif -%}
-{%- endmacro -%}
-{{- dispatch(node) -}}""",
-        trim_blocks=True,
-        lstrip_blocks=True,
-    ).render(
-        node=node,
-        type=type,
-        isinstance=isinstance,
-        Document=Document,
-        Link=Link,
-        Field=Field,
-        _list=list,
-        as_absolute=lambda url: as_absolute(base_url, url),
-        base_url=base_url,
+@lru_cache(1)
+def get_pygments_style():
+    html = highlight("[]", JsonLexer(), HtmlFormatter(full=True))
+    return (
+        '<style type="text/css">'
+        + html.split('<style type="text/css">')[1].split("</style>")[0]
+        + "</style>"
     )
 
 
-class HTMLSerializer(Serializer):
+def _html_serializer(node, base_url, path, schema):
+    """Serializes a document to HTML."""
+    content = json.dumps(node, indent=4)
+    node_schema = json.dumps(schema["paths"][path], indent=4)
+    return HTML.render(
+        title=schema["info"]["title"],
+        style=get_pygments_style(),
+        content=highlight(content, JsonLexer(), HtmlFormatter()),
+        schema=highlight(node_schema, JsonLexer(), HtmlFormatter()),
+    )
+
+
+class HTMLSerializer:
     """HTML serializer."""
 
     media_type = "text/html"
 
-    def serialize(self, document: Document, base_url: str = None) -> bytes:
+    def serialize(self, document, base_url: str, path, schema) -> str:
         """Serializes a document to HTML."""
-        return _html_serializer(document, base_url).encode("UTF-8")
+        return _html_serializer(document, base_url, path, schema)
